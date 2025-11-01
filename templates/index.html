@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LandCraftAi - AI House Plan Generator</title>
+    <link rel="icon" href="/logo.jpeg" type="image/jpeg">
+    <link rel="apple-touch-icon" href="/logo.jpeg">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #e5e7eb;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* Glow Effects */
+        @keyframes glow {
+            0%, 100% { 
+                box-shadow: 0 0 20px rgba(16, 185, 129, 0.3), 0 0 40px rgba(16, 185, 129, 0.15);
+            }
+            50% { 
+                box-shadow: 0 0 30px rgba(16, 185, 129, 0.5), 0 0 60px rgba(16, 185, 129, 0.25);
+            }
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        @keyframes scroll-infinite {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
+        }
+
+        @keyframes btn-hover {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 0 25px rgba(16, 185, 129, 0.6);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+            }
+        }
+
+        .brand { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            gap: 12px; 
+            margin-bottom: 30px;
+            animation: slideInUp 0.6s ease-out;
+        }
+
+        .brand img { 
+            height: 56px; 
+            width: auto;
+            filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.4));
+        }
+
+        .brand-name { 
+            font-size: 32px; 
+            font-weight: 800; 
+            background: linear-gradient(135deg, #10b981 0%, #6ee7b7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 1px;
+        }
+        
+        .card {
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(26, 26, 46, 0.8) 100%);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 24px;
+            padding: 50px 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(16, 185, 129, 0.1);
+            margin-bottom: 20px;
+            animation: slideInUp 0.8s ease-out, glow 3s ease-in-out infinite;
+            backdrop-filter: blur(10px);
+        }
+
+        .card.features-card {
+            animation: none;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(139, 115, 85, 0.1) 100%);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 30px;
+            min-width: 280px;
+            flex-shrink: 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .card.features-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(16, 185, 129, 0.5);
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.2);
+        }
+
+        .card.features-card h3 {
+            color: #10b981;
+            margin-bottom: 12px;
+            font-size: 1.3em;
+        }
+
+        .card.features-card p {
+            color: #cbd5e1;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+
+        h1 {
+            background: linear-gradient(135deg, #10b981 0%, #6ee7b7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+            font-size: 2.2em;
+        }
+
+        h2 {
+            background: linear-gradient(135deg, #10b981 0%, #6ee7b7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+        
+        .subtitle {
+            color: #a0aec0;
+            margin-bottom: 30px;
+            font-size: 1em;
+            line-height: 1.6;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 2px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981 0%, #6ee7b7 100%);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+        }
+        
+        .phase {
+            display: none;
+        }
+        
+        .phase.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 12px;
+            color: #e5e7eb;
+            font-weight: 600;
+            font-size: 1.05em;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid rgba(16, 185, 129, 0.2);
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s;
+            background: rgba(15, 23, 42, 0.5);
+            color: #e5e7eb;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #10b981;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+            background: rgba(15, 23, 42, 0.7);
+        }
+        
+        .radio-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .radio-option {
+            flex: 1;
+            min-width: 90px;
+        }
+        
+        .radio-option input[type="radio"] {
+            display: none;
+        }
+        
+        .radio-option label {
+            display: block;
+            padding: 14px;
+            border: 2px solid rgba(16, 185, 129, 0.2);
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 0;
+            background: rgba(15, 23, 42, 0.5);
+            color: #a0aec0;
+        }
+        
+        .radio-option input[type="radio"]:checked + label {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.3) 0%, rgba(139, 115, 85, 0.3) 100%);
+            color: #10b981;
+            border-color: #10b981;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+        }
+        
+        .btn {
+            padding: 14px 32px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+
+        .btn:hover::before {
+            animation: ripple 0.6s ease-out;
+        }
+
+        @keyframes ripple {
+            to {
+                width: 300px;
+                height: 300px;
+            }
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            width: 100%;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 30px rgba(16, 185, 129, 0.5);
+            animation: btn-hover 0.6s ease-in-out;
+        }
+
+        .btn-secondary {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            border: 2px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: #10b981;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+        }
+        
+        .cost-display {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(139, 115, 85, 0.1) 100%);
+            padding: 30px;
+            border-radius: 16px;
+            text-align: center;
+            margin: 25px 0;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.1);
+        }
+        
+        .cost-display h3 {
+            color: #10b981;
+            margin-bottom: 12px;
+            font-size: 1.1em;
+        }
+        
+        .cost-amount {
+            font-size: 42px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #10b981 0%, #6ee7b7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .cost-display p {
+            color: #cbd5e1;
+            margin-top: 10px;
+        }
+        
+        .chat-container {
+            height: 450px;
+            overflow-y: auto;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 20px;
+            background: rgba(15, 23, 42, 0.4);
+        }
+        
+        .message {
+            margin-bottom: 18px;
+            display: flex;
+            gap: 12px;
+            animation: slideInUp 0.4s ease-out;
+        }
+        
+        .message.bot {
+            justify-content: flex-start;
+        }
+        
+        .message.user {
+            justify-content: flex-end;
+        }
+        
+        .message-bubble {
+            max-width: 75%;
+            padding: 14px 18px;
+            border-radius: 16px;
+            line-height: 1.5;
+        }
+        
+        .message.bot .message-bubble {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(139, 115, 85, 0.2) 100%);
+            color: #e5e7eb;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+        
+        .message.user .message-bubble {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+        
+        .smart-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .chip {
+            padding: 10px 18px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 2px solid rgba(16, 185, 129, 0.3);
+            border-radius: 24px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #10b981;
+            transition: all 0.3s;
+        }
+        
+        .chip:hover {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: #10b981;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .input-group input {
+            flex: 1;
+        }
+        
+        .input-group button {
+            width: auto;
+            padding: 14px 28px;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 30px;
+            color: #10b981;
+            animation: pulse-glow 1.5s ease-in-out infinite;
+        }
+        
+        .loading.active {
+            display: block;
+        }
+
+        .loading p {
+            font-size: 1.1em;
+        }
+        
+        .generate-btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            width: 100%;
+            padding: 16px;
+            font-size: 16px;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+        }
+        
+        .generate-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            animation: none;
+        }
+
+        .features-carousel {
+            position: relative;
+            margin: 40px 0;
+            overflow: hidden;
+        }
+
+        .carousel-container {
+            display: flex;
+            gap: 20px;
+            animation: scroll-infinite 30s linear infinite;
+            padding-bottom: 15px;
+        }
+
+        .carousel-container:hover {
+            animation-play-state: paused;
+        }
+
+        .carousel-container-clone {
+            display: flex;
+            gap: 20px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .btn-group button {
+            flex: 1;
+            padding: 14px;
+        }
+
+        .question-counter {
+            text-align: center;
+            color: #a0aec0;
+            font-size: 0.9em;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Phase 0: Features Showcase -->
+        <div id="phase0" class="phase active">
+            <div class="card">
+                <div class="brand"><a href="/"><img src="/logo.jpeg" alt="LandCraftAi"></a><span class="brand-name">LandCraftAi</span></div>
+                
+                <h1>AI-Powered House Planning</h1>
+                <p class="subtitle">Generate stunning 3D house plans tailored to your needs with our advanced AI technology</p>
+
+                <!-- Features Carousel -->
+                <div class="features-carousel">
+                    <div class="carousel-container" id="carouselContainer">
+                        <div class="card features-card">
+                            <h3>🏗️ Smart Design</h3>
+                            <p>AI creates optimal layouts based on your preferences and site conditions</p>
+                        </div>
+                        <div class="card features-card">
+                            <h3>💰 Cost Estimation</h3>
+                            <p>Accurate construction cost predictions for Tamil Nadu locations</p>
+                        </div>
+                        <div class="card features-card">
+                            <h3>📐 3D Visualization</h3>
+                            <p>Beautiful 3D models to visualize your dream house before building</p>
+                        </div>
+                        <div class="card features-card">
+                            <h3>🎨 Customization</h3>
+                            <p>Chat with AI to refine every detail of your house design</p>
+                        </div>
+                        <div class="card features-card">
+                            <h3>📋 Compliance</h3>
+                            <p>Ensures compliance with Tamil Nadu building regulations</p>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="startQuestions()">Let's Get Started</button>
+            </div>
+        </div>
+        
+        <!-- Phase 1: Step-by-Step Questions -->
+        <div id="phase1" class="phase">
+            <div class="card">
+                <div class="brand"><span class="brand-name">LandCraftAi</span></div>
+                
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+
+                <div id="questionContainer"></div>
+                
+                <div class="btn-group">
+                    <button class="btn btn-secondary" id="prevBtn" onclick="prevQuestion()" style="display:none;">← Previous</button>
+                    <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Continue →</button>
+                </div>
+
+                <div class="question-counter">
+                    <span id="currentQuestion">1</span> of <span id="totalQuestions">8</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Phase 2: Chat Interface -->
+        <div id="phase2" class="phase">
+            <div class="card">
+                <h2>💬 Let's Customize Your Design</h2>
+                <p class="subtitle">Chat with our AI to fine-tune every detail of your house plan</p>
+                
+                <div class="chat-container" id="chatContainer"></div>
+                
+                <div class="smart-chips" id="smartChips"></div>
+                
+                <div class="input-group">
+                    <input type="text" id="userInput" placeholder="Describe your preferences..." onkeypress="handleKeyPress(event)">
+                    <button class="btn btn-primary" onclick="sendMessage()">Send</button>
+                </div>
+                
+                <div class="loading" id="loading">
+                    <p>🤖 AI is thinking...</p>
+                </div>
+                
+                <button class="btn generate-btn" id="generateBtn" onclick="generateFinal()" disabled>
+                    Generate My House Plan & 3D Model
+                </button>
+            </div>
+        </div>
+        
+        <!-- Phase 3: Generating -->
+        <div id="phase3" class="phase">
+            <div class="card" style="text-align: center;">
+                <h2>🎨 Creating Your Perfect House</h2>
+                <p class="subtitle">Generating 3D model, floor plan, and detailed specifications</p>
+                <div class="loading active">
+                    <p style="font-size: 48px;">🏗️</p>
+                    <p>This may take 20-30 seconds...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentQuestion = 0;
+        let userParams = {};
+
+        const questions = [
+            {
+                question: "How many bedrooms do you need?",
+                type: "radio",
+                name: "bhk",
+                options: ["1 BHK", "2 BHK", "3 BHK", "4 BHK"],
+                values: ["1", "2", "3", "4"],
+                default: "2"
+            },
+            {
+                question: "What's your plot size?",
+                type: "input",
+                name: "plot_size",
+                placeholder: "Enter plot size",
+                default: "1000"
+            },
+            {
+                question: "What unit do you prefer?",
+                type: "radio",
+                name: "unit",
+                options: ["Square Feet (sqft)", "Square Meters (sqm)", "Cent"],
+                values: ["sqft", "sqm", "cent"],
+                default: "sqft"
+            },
+            {
+                question: "Which direction should the house face?",
+                type: "radio",
+                name: "facing",
+                options: ["North", "South", "East", "West"],
+                values: ["North", "South", "East", "West"],
+                default: "East"
+            },
+            {
+                question: "Which district in Tamil Nadu?",
+                type: "select",
+                name: "district",
+                options: ["Chennai", "Coimbatore", "Madurai", "Tiruchirappalli", "Salem", "Tirunelveli", "Tiruppur", "Erode", "Vellore", "Thoothukudi", "Thanjavur", "Dindigul", "Cuddalore", "Kanchipuram", "Chengalpattu", "Tiruvallur", "Villupuram", "Nagapattinam", "Namakkal", "Krishnagiri", "Dharmapuri", "Virudhunagar", "Sivaganga", "Pudukkottai", "Ramanathapuram", "Theni", "Nilgiris", "Tiruvarur", "Ariyalur", "Perambalur", "Kallakurichi"],
+                values: null,
+                default: ""
+            },
+            {
+                question: "Select your pincode",
+                type: "select",
+                name: "pincode",
+                options: [],
+                values: null,
+                default: "",
+                dependent: true
+            },
+            {
+                question: "What's your preferred style?",
+                type: "radio",
+                name: "style",
+                options: ["Modern", "Traditional", "Minimalist", "Tamil Nadu Village"],
+                values: ["Modern", "Traditional", "Minimalist", "Tamil Nadu Village"],
+                default: "Modern"
+            },
+            {
+                question: "Ready to generate your design?",
+                type: "info",
+                name: "ready"
+            }
+        ];
+
+        const districtPincodes = {
+            "Chennai": ["600001", "600002", "600003", "600004", "600005", "600010", "600020", "600030"],
+            "Coimbatore": ["641001", "641002", "641003", "641004", "641005", "641010", "641012"],
+            "Madurai": ["625001", "625002", "625003", "625004", "625005", "625006"],
+            "Tiruchirappalli": ["620001", "620002", "620003", "620004", "620005", "620006"],
+            "Salem": ["636001", "636002", "636003", "636004", "636005", "636006"],
+            "Tirunelveli": ["627001", "627002", "627003", "627004", "627005"],
+            "Tiruppur": ["641601", "641602", "641603", "641604", "641605"],
+            "Erode": ["638001", "638002", "638003", "638004", "638005"],
+            "Vellore": ["632001", "632002", "632003", "632004", "632005"],
+            "Thoothukudi": ["628001", "628002", "628003", "628004"],
+            "Thanjavur": ["613001", "613002", "613003", "613004"],
+            "Dindigul": ["624001", "624002", "624003", "624004"],
+            "Cuddalore": ["607001", "607002", "607003"],
+            "Kanchipuram": ["631501", "631502", "631551"],
+            "Chengalpattu": ["603001", "603002", "603003"],
+            "Tiruvallur": ["602001", "602002", "602003"],
+            "Villupuram": ["605601", "605602"],
+            "Nagapattinam": ["611001", "611002"],
+            "Namakkal": ["637001", "637002"],
+            "Krishnagiri": ["635001", "635002"],
+            "Dharmapuri": ["636701", "636702"],
+            "Virudhunagar": ["626001", "626002"],
+            "Sivaganga": ["630001", "630002"],
+            "Pudukkottai": ["622001", "622002"],
+            "Ramanathapuram": ["623001", "623002"],
+            "Theni": ["625512", "625513"],
+            "Nilgiris": ["643001", "643002"],
+            "Tiruvarur": ["610001", "610002"],
+            "Ariyalur": ["621704"],
+            "Perambalur": ["621212"],
+            "Kallakurichi": ["606202"]
+        };
+
+        function initPage() {
+            document.getElementById('totalQuestions').textContent = questions.length;
+            initCarousel();
+        }
+
+        // Initialize carousel animation
+        function initCarousel() {
+            const container = document.getElementById('carouselContainer');
+            if (container) {
+                const clone = container.innerHTML;
+                container.innerHTML += clone;
+            }
+        }
+
+        function renderQuestion() {
+            const q = questions[currentQuestion];
+            const progress = ((currentQuestion + 1) / questions.length) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+            document.getElementById('currentQuestion').textContent = currentQuestion + 1;
+
+            let html = `<h2>${q.question}</h2><div class="form-group">`;
+
+            if (q.type === "radio") {
+                html += '<div class="radio-group">';
+                q.options.forEach((opt, i) => {
+                    const id = `opt${currentQuestion}_${i}`;
+                    const val = q.values[i];
+                    const checked = userParams[q.name] === val ? 'checked' : '';
+                    html += `
+                        <div class="radio-option">
+                            <input type="radio" id="${id}" name="${q.name}" value="${val}" ${checked}>
+                            <label for="${id}">${opt}</label>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            } else if (q.type === "input") {
+                const val = userParams[q.name] || q.default;
+                html += `<input type="number" id="qinput" value="${val}" placeholder="${q.placeholder}" min="100">`;
+            } else if (q.type === "select") {
+                const options = q.name === "pincode" ? (districtPincodes[userParams.district] || []) : q.options;
+                const val = userParams[q.name] || q.default;
+                html += `<select id="qselect"><option value="">Select ${q.name}</option>`;
+                options.forEach(opt => {
+                    const selected = val === opt ? 'selected' : '';
+                    html += `<option value="${opt}" ${selected}>${opt}</option>`;
+                });
+                html += `</select>`;
+            } else if (q.type === "info") {
+                html = `<h2>${q.question}</h2>
+                    <div class="cost-display">
+                        <h3>Your Configuration</h3>
+                        <p style="margin: 15px 0;">BHK: <strong>${userParams.bhk || 'N/A'}</strong></p>
+                        <p style="margin: 10px 0;">Plot Size: <strong>${userParams.plot_size || 'N/A'} ${userParams.unit || 'N/A'}</strong></p>
+                        <p style="margin: 10px 0;">Facing: <strong>${userParams.facing || 'N/A'}</strong></p>
+                        <p style="margin: 10px 0;">District: <strong>${userParams.district || 'N/A'}</strong></p>
+                        <p style="margin: 10px 0;">Pincode: <strong>${userParams.pincode || 'N/A'}</strong></p>
+                        <p style="margin: 10px 0;">Style: <strong>${userParams.style || 'N/A'}</strong></p>
+                    </div>
+                `;
+            }
+
+            html += '</div>';
+            document.getElementById('questionContainer').innerHTML = html;
+
+            // Show/hide buttons
+            document.getElementById('prevBtn').style.display = currentQuestion > 0 ? 'block' : 'none';
+            document.getElementById('nextBtn').textContent = currentQuestion === questions.length - 1 ? '🚀 Generate' : 'Continue →';
+        }
+
+        function saveCurrentAnswer() {
+            const q = questions[currentQuestion];
+            if (q.type === "radio") {
+                const checked = document.querySelector(`input[name="${q.name}"]:checked`);
+                if (checked) {
+                    userParams[q.name] = checked.value;
+                }
+            } else if (q.type === "input") {
+                const input = document.getElementById('qinput');
+                if (input && input.value) {
+                    userParams[q.name] = input.value;
+                }
+            } else if (q.type === "select") {
+                const select = document.getElementById('qselect');
+                if (select && select.value) {
+                    userParams[q.name] = select.value;
+                }
+            }
+        }
+
+        function startQuestions() {
+            document.getElementById('phase0').classList.remove('active');
+            document.getElementById('phase1').classList.add('active');
+            renderQuestion();
+        }
+
+        function nextQuestion() {
+            saveCurrentAnswer();
+            if (currentQuestion < questions.length - 1) {
+                currentQuestion++;
+                renderQuestion();
+            } else {
+                calculateAndProceed();
+            }
+        }
+
+        function prevQuestion() {
+            saveCurrentAnswer();
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                renderQuestion();
+            }
+        }
+
+        function calculateAndProceed() {
+            fetch('/calculate-rate', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    plot_size: userParams.plot_size,
+                    unit: userParams.unit,
+                    pincode: userParams.pincode
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                userParams.sqft = data.sqft;
+                userParams.rate = data.rate;
+                userParams.cost = data.formatted_cost;
+                initChat();
+            })
+            .catch(() => initChat());
+        }
+
+        function initChat() {
+            fetch('/init-chat', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(userParams)
+            })
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('phase1').classList.remove('active');
+                document.getElementById('phase2').classList.add('active');
+                addMessage('bot', data.message);
+                updateSmartChips(data.smart_chips);
+            })
+            .catch(() => {
+                document.getElementById('phase1').classList.remove('active');
+                document.getElementById('phase2').classList.add('active');
+                addMessage('bot', 'Welcome! Tell me more about your dream home.');
+            });
+        }
+
+        function addMessage(role, text) {
+            const chat = document.getElementById('chatContainer');
+            const msg = document.createElement('div');
+            msg.className = `message ${role}`;
+            msg.innerHTML = `<div class="message-bubble">${text}</div>`;
+            chat.appendChild(msg);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        function updateSmartChips(chips) {
+            const container = document.getElementById('smartChips');
+            container.innerHTML = '';
+            if (chips && chips.length) {
+                chips.forEach(chip => {
+                    const el = document.createElement('div');
+                    el.className = 'chip';
+                    el.textContent = chip;
+                    el.onclick = () => {
+                        document.getElementById('userInput').value = chip;
+                        sendMessage();
+                    };
+                    container.appendChild(el);
+                });
+            }
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+            if (!message) return;
+            
+            addMessage('user', message);
+            input.value = '';
+            
+            document.getElementById('loading').classList.add('active');
+            
+            fetch('/chat', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({message})
+            })
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('loading').classList.remove('active');
+                addMessage('bot', data.response);
+                updateSmartChips(data.smart_chips);
+                if (data.ready_to_generate) {
+                    document.getElementById('generateBtn').disabled = false;
+                }
+            })
+            .catch(() => {
+                document.getElementById('loading').classList.remove('active');
+                addMessage('bot', 'Got it! Feel free to continue refining your design.');
+            });
+        }
+        
+        function handleKeyPress(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        }
+        
+        function generateFinal() {
+            document.getElementById('phase2').classList.remove('active');
+            document.getElementById('phase3').classList.add('active');
+            
+            fetch('/generate-final', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = data.redirect_url;
+                }
+            })
+            .catch(() => alert('Generation started!'));
+        }
+
+        window.addEventListener('DOMContentLoaded', initPage);
+    </script>
+</body>
+</html>

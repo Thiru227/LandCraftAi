@@ -1,0 +1,14 @@
+Flask==3.0.0
+google-generativeai==0.3.2
+trimesh==4.0.5
+numpy==1.24.3
+requests==2.31.0
+Werkzeug==3.0.1
+
+# Optional but recommended for better 3D rendering
+pillow==10.1.0
+scipy==1.11.4
+
+# For production deployment (optional)
+gunicorn==21.2.0
+python-dotenv==1.0.0
